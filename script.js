@@ -412,8 +412,12 @@ Promise.resolve('Hello').then(str => console.log(str));
 // So these new features, we have to polyfill them. Now Babel used to do polyfilling out of the box some time ago, but recently they started to simply recommending
 // another library. And so we now have to manually import that as well.
 
-//
-// import 'core-js/stable/array/find';
+// import 'core-js/stable';
+
+// Instead of importing everything we could do this, so that's going to be a lot of work which we usually don't do, but it's possible again if you are really worried
+// about your bundle size.
+import 'core-js/stable/array/find';
+import 'core-js/stable/promise';
 
 // Polyfilling async functions
 import 'regenerator-runtime/runtime';
