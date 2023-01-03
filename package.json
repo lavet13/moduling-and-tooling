@@ -1,0 +1,23 @@
+{
+  "name": "moduling-and-tooling",
+  "version": "1.0.0",
+  "description": "",
+  "source": "./index.html",
+  "browserslist": "> 0.5%, last 2 versions, not dead",
+  "scripts": {
+    "start": "parcel",
+    "build": "parcel build"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "core-js": "^3.27.1",
+    "leaflet": "^1.9.3",
+    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
+    "regenerator-runtime": "^0.13.11"
+  },
+  "devDependencies": {
+    "parcel": "^2.8.2"
+  }
+}
