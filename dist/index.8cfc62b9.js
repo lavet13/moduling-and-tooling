@@ -818,6 +818,15 @@ const { addToCart } = require('./shoppingCart.js');
 // import cloneDeep from './node_modules/lodash-es/cloneDeep.js';
 var _lodash = require("lodash");
 var _lodashDefault = parcelHelpers.interopDefault(_lodash);
+// Babel can actually only transpile ES6 Syntax, so data things like arrow functions, classes, const or the spread operator. So these are basically things that
+// have an equivalent way of writing them in ES5. For example, arrow functions it is simply a different syntax. And so Babel can simply write function instead of that.
+// And the same goes with const so it's very easy to simply convert that to "var" but the same is not true for real new features that were added to the language
+// like find and promise so these new features they can simply not be transpiled. It's simply not possible. For these added features, such as promises or all the array
+// methods like find and really bunch of other stuff, we can polyfill them. And so that's why since the beginning I've always been saying transpiling and polyfilling.
+// So these new features, we have to polyfill them. Now Babel used to do polyfilling out of the box some time ago, but recently they started to simply recommending
+// another library. And so we now have to manually import that as well.
+//
+// import 'core-js/stable/array/find';
 // Polyfilling async functions
 var _runtime = require("regenerator-runtime/runtime");
 console.log("Importing module");
