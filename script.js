@@ -365,7 +365,11 @@ console.log(`copyDeepState = ${JSON.stringify(copyDeepState)}`);
 // Hot module reloading means that whenever we change one of the modules, it will then trigger a rebuild, but that new modified bundle will then automatically,
 // like magic, get injected into the browser without triggering a whole page reload. So with Parcel and hot module replacement, the state of the page will be maintained.
 if (module.hot) {
-    module.hot.accept();
+    module.hot.accept(() => {
+        console.log(cart);
+        console.log(module.hot.savedData);
+        cart = [];
+    });
 }
 
 // Wheneven we are done developing our project, it is time to build the final bundle. So the bundle that is compressed and has dead code elimination and all of that.
