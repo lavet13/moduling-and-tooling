@@ -1,4 +1,8 @@
-const budget = [
+'use strict';
+
+// Object.freeze only freezes the first level of the object. So it's not a so-called deep freeze because we
+// can still change objects inside of the object.
+const budget = Object.freeze([
     { value: 250, description: 'Sold old TV 📺', user: 'jonas' },
     { value: -45, description: 'Groceries 🥑', user: 'jonas' },
     { value: 3500, description: 'Monthly salary 👩‍💻', user: 'jonas' },
@@ -7,27 +11,69 @@ const budget = [
     { value: -20, description: 'Candy 🍭', user: 'matilda' },
     { value: -125, description: 'Toys 🚂', user: 'matilda' },
     { value: -1800, description: 'New Laptop 💻', user: 'jonas' },
-];
+]);
 
+// we can
+// budget[0].value = 10000;
+
+// we cannot
+// budget[9] = 'jonas';
+
+// const limit = spendingLimits[user] ? spendingLimits[user] : 0;
 const getLimit = user => spendingLimits[user] ?? 0;
 
-const spendingLimits = {
+// spendingLimits is now immutable
+const spendingLimits = Object.freeze({
     jonas: 1500,
     matilda: 100,
+});
+
+// side effect means that something outside of a function is manipulated or that the function does something other than simply returning a value.
+// And so a function that has, or that produces side effects is called an impure function.
+// So how do we fix that? first of all, we should always pass all the data that the function depends on into the function, so that it doesn't have to
+// reach into the outer scope. And then of course, the function shouldn't change any of these values.
+// We shouldn't pass more than three arguments into a function. Now, in this case, we actually have five parameters, but well,
+// sometimes it's not a big deal to break those rules. We could also pass in simply one object of options basically, but let's keep it simple.
+
+// this function is no longer produce side effects. It's officially a pure function.
+const addExpense = function ({ state, value, description }, user = 'jonas') {
+    // user = user.toLowerCase(); // avoid data mutations whenever possible
+    const cleanUser = user.toLowerCase();
+
+    return value <= getLimit(cleanUser)
+        ? [
+              ...JSON.parse(JSON.stringify(state)),
+              {
+                  value: -value,
+                  description,
+                  user: cleanUser,
+              },
+          ]
+        : state;
 };
 
-const addExpense = function (value, description, user = 'jonas') {
-    // const limit = spendingLimits[user] ? spendingLimits[user] : 0;
+const newBudget1 = addExpense({
+    state: budget,
+    value: 10,
+    description: 'Pizza 🍕',
+});
 
-    value <= getLimit(user.toLowerCase()) &&
-        budget.push({ value: -value, description, user });
-};
+const newBudget2 = addExpense(
+    {
+        state: newBudget1,
+        value: 100,
+        description: 'Going to movies 🍿',
+    },
+    'Matilda'
+);
 
-addExpense(10, 'Pizza 🍕');
-addExpense(100, 'Going to movies 🍿', 'Matilda');
-addExpense(200, 'Stuff', 'Jay');
+const newBudget3 = addExpense(
+    { state: newBudget2, value: 200, description: 'Stuff' },
+    'Jay'
+);
 
-console.log(budget);
+console.log(newBudget1, newBudget2, newBudget3);
+// console.log(budget);
 
 const checkExpenses = function () {
     budget.forEach(entry => {
@@ -38,8 +84,6 @@ const checkExpenses = function () {
 };
 
 checkExpenses();
-
-console.log(budget);
 
 const logBigExpenses = function (bigLimit) {
     const output = budget
@@ -146,4 +190,32 @@ logBigExpenses(-300);
 // side effects over the ones that do, and this is really important for data transformations. So whenever you want to do that, you should use the methods, such as
 // map, filter and reduce. So this is the functional and modern way of doing data transformations, and many times, this is actually the first contact that many
 // people have, with functional programming. So map, filter and reduce are actually present in all functional programming languages, and they are very important
-// to implement a functional code
+// to implement a functional code and more declarative code in our code. And finally, you can also try to avoid side effects into functions that you write yourself.
+// And again, this is of course, not always possible, and also not always necessary. So we will never be able to avoid all side effects in applications, because
+// of course, at some point, the application needs to do something. So, it needs to display something on the DOM, or log something to the console, or really create
+// some side effect. But you can still try to think about this, and to start incorporating side effects more into your own code. And now to finish, let's come back
+// to declarative syntax, because functional programming is only a part of using and writing declarative code. So, in order to write code that is more declarative,
+// you should use array and object destructuring whenever that's possible. You should also use the spread operator, the ternary operator, and also template literals
+// whenever that is possible, because if you think about it, then all of these four ways of writing code, actually makes the code more declarative. So, these operators
+// are more about telling the code what to do, and not exactly the steps that it should take. And that's, again, true for all these four pieces of syntax.
+
+// FUNCTIONAL PROGRAMMING TECHNIQUES
+// 👉 Try to avoid data mutations
+// 👉 Use built-in methods that don't produce side effects
+// 👉 Do data transformations with methods such as .map(), .filter() and .reduce()
+// 👉 Try to avoid side effects in functions: this is of course not always possible!
+
+// DECLARATIVE SYNTAX
+// 👉 Use array and object destructuring
+// 👉 Use the spread operator (...)
+// 👉 Use the ternary (conditional) operator
+// 👉 Use template literals
+
+// Functional programming
+// 👉 Declarative programming paradigm
+// 👉 Based on the idea of writing software by combining many pure functions, avoiding side effects and mutating data
+// 👉 Side effect(red): Modification (mutation) of any data outside of the function (mutating external variables, logging to console, writing to DOM, etc.)
+// 👉 Pure functions: Function without side effects. Does not depend on external variables. Given the same inputs, always returns the same outputs.
+// 👉 Immutability: State (data) is never modified! Instead, state is copied and the copy is mutated and returned.
+
+// Examples: REACT, REDUX
