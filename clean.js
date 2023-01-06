@@ -36,6 +36,8 @@ const spendingLimits = Object.freeze({
 // sometimes it's not a big deal to break those rules. We could also pass in simply one object of options basically, but let's keep it simple.
 
 // this function is no longer produce side effects. It's officially a pure function.
+
+// in the real world, we would use something called composing and the technique called currying to basically create the chain of operations here.
 const addExpense = function ({ state, value, description }, user = 'jonas') {
     // user = user.toLowerCase(); // avoid data mutations whenever possible
     const cleanUser = user.toLowerCase();
@@ -72,9 +74,10 @@ const newBudget3 = addExpense(
     'Jay'
 );
 
-console.log(newBudget1, newBudget2, newBudget3);
+console.log(newBudget3);
 // console.log(budget);
 
+// Let's turn our attention to data transformations here in this case.
 const checkExpenses = function () {
     budget.forEach(entry => {
         const { user, value } = entry;
