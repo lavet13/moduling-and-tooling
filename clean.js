@@ -20,7 +20,9 @@ const budget = Object.freeze([
 // budget[9] = 'jonas';
 
 // const limit = spendingLimits[user] ? spendingLimits[user] : 0;
-const getLimit = user => spendingLimits[user] ?? 0;
+
+// Now, this function here is no longer depends on any external variable. It can do all it's work without having to look up in the scope chain
+const getLimit = (user, limits) => limits[user] ?? 0;
 
 // spendingLimits is now immutable
 const spendingLimits = Object.freeze({
@@ -38,24 +40,30 @@ const spendingLimits = Object.freeze({
 // this function is no longer produce side effects. It's officially a pure function.
 
 // in the real world, we would use something called composing and the technique called currying to basically create the chain of operations here.
-const addExpense = function ({ state, value, description }, user = 'jonas') {
+const addExpense = function (
+    { state, spendingLimits, value, description },
+    user = 'jonas'
+) {
     // user = user.toLowerCase(); // avoid data mutations whenever possible
     const cleanUser = user.toLowerCase();
 
-    return value <= getLimit(cleanUser)
+    return value <= getLimit(cleanUser, spendingLimits)
         ? [
               ...JSON.parse(JSON.stringify(state)),
+              //   ...state,
               {
                   value: -value,
                   description,
                   user: cleanUser,
               },
           ]
-        : state;
+        : // : state;
+          JSON.parse(JSON.stringify(state));
 };
 
 const newBudget1 = addExpense({
     state: budget,
+    spendingLimits,
     value: 10,
     description: 'Pizza 🍕',
 });
@@ -63,6 +71,7 @@ const newBudget1 = addExpense({
 const newBudget2 = addExpense(
     {
         state: newBudget1,
+        spendingLimits,
         value: 100,
         description: 'Going to movies 🍿',
     },
@@ -70,39 +79,94 @@ const newBudget2 = addExpense(
 );
 
 const newBudget3 = addExpense(
-    { state: newBudget2, value: 200, description: 'Stuff' },
+    { state: newBudget2, spendingLimits, value: 200, description: 'Stuff' },
     'Jay'
 );
 
-console.log(newBudget3);
-// console.log(budget);
-
 // Let's turn our attention to data transformations here in this case.
-const checkExpenses = function () {
-    budget.forEach(entry => {
+// to transform this function into a pure function:
+// 👉 we want to pass in all the data that the function depends on
+// 👉 return the state(data) or a copy of the state
+
+// Note: we transformed this function here into a pure function, which does not mutate anything because the map
+// method here returns a brand new array, so we give this function an array and it will then create a new one
+// simply by mapping over the original one. And in each position of the array, we then either return a copy
+// of the original entry + the flag property or simply we return the original entry as it was. With this our
+// function is nice and pure and doesn't create any side effect and doesn't manipulate anything.
+// WE SHOULD ALWAYS PASS ALL THE DATA THAT WE NEED FOR A CERTAIN FUNCTION TO WORK RIGHT INTO THAT FUNCTION
+// SO THAT, AGAIN, IT DOESN'T DEPEND ON ANY OUTSIDE DATA, BECAUSE IN PRACTICE THAT THIS MAKES IT A LOT EASIER
+// TO REASON ABOUT THE FUNCTION ITSELF. IF YOU DO THAT FOR ALL OF YOUR FUNCTIONS, THEN IN THE END THAT WILL MAKE
+// YOUR CODE A LOT EASIER TO UNDERSTAND AND A LOT MORE READABLE.
+const checkExpenses = function (state, limits) {
+    // it makes sense to use the map method here, that's in the spirit of functional code and of immutability
+    // So not mutating the state, but instead creating a new state based on the original one.
+    return state.map(entry => {
+        // in the map function whatever is returned from the callback will be the element in the same position of
+        // the new array
         const { user, value } = entry;
 
-        value < -getLimit(user) && (entry.flag = 'limit');
+        return value < -getLimit(user, limits)
+            ? { ...entry, flag: 'limit' }
+            : JSON.parse(JSON.stringify(entry));
     });
 };
 
-checkExpenses();
+// simplier version of the function
+// const checkExpenses = (state, limits) =>
+//     state.map(entry =>
+//         entry.value < -getLimit(entry.user, limits)
+//             ? { ...entry, flag: 'limit' }
+//             : JSON.parse(JSON.stringify(entry))
+//     );
 
-const logBigExpenses = function (bigLimit) {
-    const output = budget
-        .reduce(
-            (acc, entry) =>
-                entry.value <= -bigLimit
-                    ? (acc += `${entry.description.slice(-2)} / `)
-                    : acc,
-            ''
-        )
-        .slice(0, -2);
+const finalBudget = checkExpenses(newBudget3, spendingLimits);
 
-    console.log(output);
+console.log(finalBudget);
+
+const logBigExpenses = function (state, bigLimit) {
+    // WE ARE ACTUALLY CONSTANTLY MANIPULATING OR MUTATING THIS OUTPUT VARIABLE HERE. AND THAT OF COURSE, GOES AGAINST THE SPIRIT
+    // OF IMMUTABILITY. SO IMMUTABILITY IS OF COURSE NOT JUST FOR OBJECTS AND ARRAYS. THIS ALSO GOES FOR MORE REGULAR VARIABLES.
+    // AND SO IN FUNCTIONAL CODE, YOU WILL PROBABLY NEVER SEE THE LET VARIABLE. SO WE'RE ALWAYS TRYING TO COMPUTE A VARIABLE,
+    // FOR EXAMPLE, BASED ON METHODS SUCH AS map, filter, reduce etc.
+    // let outside = '';
+    // for(const entry of state) output += entry.value <= -bigLimit ? `${entry.description.slice(-2)} / ` : '';
+    // outside = outside.slice(0, -2); // remove last '/ '
+    // console.log(output);
+
+    // the question is how we could create a string simply based on pure and functional functions, so data transformations functions for arrays,
+    // and also for strings actually.
+
+    // use case of reduce is to basically take all the values in one array and create one value out of them, so reduce them all into just one.
+    // in this case what we want is our string.
+    // return state
+    //     .reduce(
+    //         (str, { value, description }) =>
+    //             value <= -bigLimit
+    //                 ? (str += `${description.slice(-2)} / `)
+    //                 : str,
+    //         ''
+    //     )
+    //     .slice(0, -2);
+
+    return state
+        .filter(({ value }) => value <= -bigLimit)
+        .map(entry => entry.description.slice(-2))
+        .join(' / ');
 };
 
-logBigExpenses(-300);
+const bigExpense = logBigExpenses(finalBudget, -300);
+console.log(bigExpense);
+
+// A LITTLE BIT ABOUT IMPURE FUNCTIONS
+// console.logs create input output which are impure because they do something, so they create a side-effects to our program.
+// but of course any program needs to have some side-effects because otherwise, what is the point of the program in the first place?
+// if we didn't have all of these console.logs, how would we even know that the program is running in the first place? It wouldn't be useful at all.
+// we always need some side effects, but in functional programming, we try to push these side effects as far to the edge, so as far to the end of our program
+// as possible, so without having them all over the place polluting our application.
+
+// DEVELOP 🧓
+// For example, you can add a function for adding the income, or you can also create functions for calculating the total expenses and incomes, the overall budget,
+// how much the expenses are in percentage of the income and so on and so forth.
 
 ///////////////////////////////////////////
 // Declarative and Functional JavaScript Principles
