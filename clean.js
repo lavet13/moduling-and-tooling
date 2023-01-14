@@ -35,7 +35,7 @@ const spendingLimits = Object.freeze({
 // So how do we fix that? first of all, we should always pass all the data that the function depends on into the function, so that it doesn't have to
 // reach into the outer scope. And then of course, the function shouldn't change any of these values.
 // We shouldn't pass more than three arguments into a function. Now, in this case, we actually have five parameters, but well,
-// sometimes it's not a big deal to break those rules. We could also pass in simply one object of options basically, but let's keep it simple.
+// sometimes it's not a big deal to break those rules. We could also pass in simply one object of options.
 
 // this function is no longer produce side effects. It's officially a pure function.
 
@@ -91,7 +91,7 @@ const newBudget3 = addExpense(
 // Note: we transformed this function here into a pure function, which does not mutate anything because the map
 // method here returns a brand new array, so we give this function an array and it will then create a new one
 // simply by mapping over the original one. And in each position of the array, we then either return a copy
-// of the original entry + the flag property or simply we return the original entry as it was. With this our
+// of the original entry + the flag property or simply we return a copy of the original entry as it was. With this our
 // function is nice and pure and doesn't create any side effect and doesn't manipulate anything.
 // WE SHOULD ALWAYS PASS ALL THE DATA THAT WE NEED FOR A CERTAIN FUNCTION TO WORK RIGHT INTO THAT FUNCTION
 // SO THAT, AGAIN, IT DOESN'T DEPEND ON ANY OUTSIDE DATA, BECAUSE IN PRACTICE THAT THIS MAKES IT A LOT EASIER
@@ -101,8 +101,6 @@ const checkExpenses = function (state, limits) {
     // it makes sense to use the map method here, that's in the spirit of functional code and of immutability
     // So not mutating the state, but instead creating a new state based on the original one.
     return state.map(entry => {
-        // in the map function whatever is returned from the callback will be the element in the same position of
-        // the new array
         const { user, value } = entry;
 
         return value < -getLimit(user, limits)
@@ -167,6 +165,80 @@ console.log(bigExpense);
 // DEVELOP 🧓
 // For example, you can add a function for adding the income, or you can also create functions for calculating the total expenses and incomes, the overall budget,
 // how much the expenses are in percentage of the income and so on and so forth.
+const addIncomes = function ({ state, value, description }, user = 'Jonas') {
+    const newUser = user.toLowerCase();
+    const posValue = Math.abs(value);
+
+    return [
+        ...JSON.parse(JSON.stringify(state)),
+        { value: posValue, description, user: newUser },
+    ];
+};
+
+const incomes = addIncomes(
+    {
+        state: finalBudget,
+        value: 150,
+        description: '💀💀',
+    },
+    'Ivan'
+);
+
+console.log(incomes);
+
+const totalExpensesAndIncomes = function (state) {
+    return state.reduce((acc, { value }) => {
+        if (value > 0 && !acc?.positive)
+            return Object.assign({ positive: value }, acc);
+        if (value < 0 && !acc?.negative)
+            return Object.assign({ negative: value }, acc);
+
+        if (value > 0) {
+            acc.positive += value;
+            return acc;
+        }
+        if (value < 0) {
+            acc.negative += value;
+            return acc;
+        }
+    }, {});
+};
+
+const totalExIncomes = totalExpensesAndIncomes(finalBudget);
+
+console.log(totalExIncomes);
+
+const overallBudget = function (state) {
+    return Object.entries(state).reduce((acc, [_, value]) => (acc += value), 0);
+};
+
+const overAllBudget = overallBudget(totalExIncomes);
+
+console.log(`Весь бюджет: ${overAllBudget}`);
+
+const percentageOfExpenses = function (state) {
+    const { positive, negative } = state;
+
+    return `${(Math.abs(negative / positive) * 100).toFixed(0)}%`;
+};
+
+const percentageOfIncomes = function (state) {
+    const { positive, negative } = state;
+
+    return `${(Math.abs(positive / negative) * 100).toFixed(0)}%`;
+};
+
+const perOfExpenses = percentageOfExpenses(totalExIncomes);
+
+console.warn(
+    `Процентное соотношение расходов по отношению к доходам составляет ${perOfExpenses}`
+);
+
+const perOfIncomes = percentageOfIncomes(totalExIncomes);
+
+console.warn(
+    `Процентное соотношение доходов по отношению к расходам составляет ${perOfIncomes}`
+);
 
 ///////////////////////////////////////////
 // Declarative and Functional JavaScript Principles

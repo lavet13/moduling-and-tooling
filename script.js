@@ -327,7 +327,7 @@ const { addToCart } = require('./shoppingCart.js');
 // let's start by using the NPM software now.
 
 // import cloneDeep from './node_modules/lodash-es/cloneDeep.js';
-import cloneDeep from 'lodash';
+import _ from 'lodash';
 
 const state = {
     cart: [
